@@ -1,0 +1,417 @@
+
+
+
+
+
+
+import math
+class computer:
+    def evaluateField(self, farbe, brett):
+        # return 0
+        evaluation = 0
+        positions = brett.getAllPositions()
+        movable_fields = []
+
+        # for piece,i,k in positions:
+        #     movable_fields.append(piece.getMoveableFields_filter(brett.feld))
+        #     if piece.farbe == farbe:
+        #         evaluation +=  piece.wertung
+        #     else:
+        #         evaluation-= piece.wertung
+
+
+
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields_filter(brett.feld))
+            if piece.wertung == 15:
+                if len(movable_fields) == 0:
+                    if piece.farbe == farbe:
+                        evaluation -= 100000000
+                    else:
+                        evaluation += 100000000
+
+        for i in range(len(movable_fields)):
+            weight = 0
+            for j, k in movable_fields[i]:
+                weight += brett.feld[j][k].wertung
+            piece = brett.feld[positions[i][1]][positions[i][2]]
+
+            if piece.wertung == 15:
+                if piece.farbe == farbe:
+                    evaluation += piece.wertung * (20 - len(movable_fields[i]))
+                else:
+                    evaluation -= piece.wertung * (20 - len(movable_fields[i]))
+
+            else:
+                if piece.farbe == farbe:
+                    evaluation += weight * piece.wertung
+                else:
+                    evaluation -= weight * piece.wertung
+
+
+
+
+        # for i in range(len(feld)):
+        #     for k in range(len(feld[i])):
+        #         piece = feld[i][k]
+        #         if piece == None:
+        #             continue
+        #         movable = piece.getMoveableFields(feld)
+        #         weight = 0
+        #         for j in movable:
+        #             temp = feld[j[0]][j[1]]
+        #             if temp == None:
+        #                 continue
+        #             weight += temp.wertung
+        #         if piece.farbe == farbe:
+        #             evaluation += weight * piece.wertung
+        #         else:
+        #             evaluation-=weight * piece.wertung
+        return evaluation
+
+    def maximize(self, brett, farbe, tiefe,currentSmallest):
+        if tiefe == 0:
+            return self.evaluateField(farbe, brett)
+        max = -math.inf
+        movable_fields = []
+        positions = brett.getAllPositionsOfColor(farbe)
+        best_ones = []
+        feld_backup = self.copy(brett.feld)
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields(brett.feld))
+        for index in range(len(movable_fields)):
+            for p in range(len(movable_fields[index])):
+                row_from = positions[index][1]
+                col_from = positions[index][2]
+                row_to = movable_fields[index][p][0]
+                col_to = movable_fields[index][p][1]
+                brett.move(row_from, col_from, row_to, col_to)
+                best_ones.append((row_from, col_from, row_to, col_to, self.evaluateField(farbe, brett)))
+                # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+                brett.setField(feld_backup)
+        # print(moves)
+        best_ones.sort(key=lambda a: a[-1], reverse=True)
+        for k in range(int(len(best_ones))):
+            row_from, col_from, row_to, col_to,_ = best_ones[k]
+            brett.move(row_from, col_from, row_to, col_to)
+            temp = self.minimize(brett, farbe, tiefe - 1,max)
+            if temp > currentSmallest:
+                return currentSmallest
+            if temp > max:
+                max = temp
+            brett.setField(feld_backup)
+        # print(moves)
+        print("here")
+        return max
+
+    def minimize(self, brett, farbe, tiefe,curBiggest):
+        if tiefe == 0:
+            return self.evaluateField(farbe, brett)
+        min = math.inf
+        movable_fields = []
+        positions = brett.getAllPositionsOfColor(farbe)
+        best_ones = []
+        feld_backup = self.copy(brett.feld)
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields(brett.feld))
+        for index in range(len(movable_fields)):
+            for p in range(len(movable_fields[index])):
+                row_from = positions[index][1]
+                col_from = positions[index][2]
+                row_to = movable_fields[index][p][0]
+                col_to = movable_fields[index][p][1]
+                brett.move(row_from, col_from, row_to, col_to)
+                best_ones.append((row_from, col_from, row_to, col_to, self.evaluateField(farbe, brett)))
+                # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+                brett.setField(feld_backup)
+        # print(moves)
+        best_ones.sort(key=lambda a: a[-1], reverse=False)
+        for k in range(int(len(best_ones))):
+            #print(k)
+            row_from, col_from, row_to, col_to,_ = best_ones[k]
+            brett.move(row_from, col_from, row_to, col_to)
+            temp = self.maximize(brett, farbe, tiefe - 1,min)
+            if temp < curBiggest:
+                return curBiggest
+            if temp < min:
+                min = temp
+            brett.setField(feld_backup)
+        print("here")
+        return min
+
+    def start(self, brett, farbe, tiefe):
+
+        if tiefe == 0:
+            return self.evaluateField(farbe, brett)
+        move = None
+        max = -math.inf
+        movable_fields = []
+        positions = brett.getAllPositionsOfColor(farbe)
+        best_ones = []
+        feld_backup = self.copy(brett.feld)
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields(brett.feld))
+        for index in range(len(movable_fields)):
+            for p in range(len(movable_fields[index])):
+                row_from = positions[index][1]
+                col_from = positions[index][2]
+                row_to = movable_fields[index][p][0]
+                col_to = movable_fields[index][p][1]
+                brett.move(row_from, col_from, row_to, col_to)
+                best_ones.append((row_from, col_from, row_to, col_to, self.evaluateField(farbe, brett)))
+                # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+                brett.setField(feld_backup)
+        # print(moves)
+        best_ones.sort(key=lambda a: a[-1], reverse=True)
+        for k in range(int(len(best_ones))):
+            row_from, col_from, row_to, col_to,_= best_ones[k]
+            brett.move(row_from, col_from, row_to, col_to)
+            temp = self.minimize(brett, farbe, tiefe - 1,max)
+            if temp > max:
+                max = temp
+                move = ((row_from, col_from), (row_to, col_to))
+            brett.setField(feld_backup)
+        # print(moves)
+        return move
+
+    # def maximize(self,brett,farbe,tiefe):
+    #     if tiefe == 0:
+    #         return self.evaluateField(farbe,brett)
+    #     moves = []
+    #     for i in range(len(brett.feld)):
+    #         for k in range(len(brett.feld[i])):
+    #             figur = brett.feld[i][k]
+    #             if figur == None:
+    #                 continue
+    #             if figur.farbe == farbe:
+    #                 possibleMoves = figur.getMoveableFields(brett.feld)
+    #                 for move in possibleMoves:
+    #                     feld_backup = self.copy(brett.feld)
+    #                     brett.move(i,k,move[0],move[1])
+    #                     temp =  self.minimize(brett,farbe , tiefe-1)
+    #                     moves.append(temp)
+    #                     #temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+    #                     brett.setField(feld_backup)
+    #     #print(moves)
+    #     moves.sort(reverse= True)
+    #     #print(moves)
+    #     return moves[0]
+    #
+    #
+    #
+    # def minimize(self,brett,farbe,tiefe):
+    #     if tiefe == 0:
+    #         return self.evaluateField(farbe,brett)
+    #     moves = []
+    #     positions = brett.getPositions(brett.feld)
+    #     for i in range(len(brett.feld)):
+    #         for k in range(len(brett.feld[i])):
+    #             figur = brett.feld[i][k]
+    #             if figur == None:
+    #                 continue
+    #             if figur.farbe == farbe:
+    #                 possibleMoves = figur.getMoveableFields(brett.feld)
+    #                 for move in possibleMoves:
+    #                     feld_backup = self.copy(brett.feld)
+    #                     brett.move(i,k,move[0],move[1])
+    #                     temp =  self.maximize(brett,farbe , tiefe-1)
+    #                     moves.append(temp)
+    #                     #temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+    #                     brett.setField(feld_backup)
+    #     moves.sort(reverse=False)
+    #     return moves[0]
+    #
+    # def start(self,brett,farbe,tiefe):
+    #     moves = []
+    #     for i in range(len(brett.feld)):
+    #         for k in range(len(brett.feld[i])):
+    #             figur = brett.feld[i][k]
+    #             if figur == None:
+    #                 continue
+    #             if figur.farbe == farbe:
+    #                 possibleMoves = figur.getMoveableFields(brett.feld)
+    #                 for move in possibleMoves:
+    #                     feld_backup = self.copy(brett.feld)
+    #                     brett.move(i, k, move[0], move[1])
+    #                     temp = self.minimize(brett, farbe, tiefe - 1)
+    #                     moves.append(((i, k), move, temp))
+    #                     # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+    #                     brett.setField(feld_backup)
+    #     moves.sort(key=lambda x: x[-1], reverse=True)
+    #     return moves[0]
+
+    def copy(self, feld):
+        ret = []
+        for i in range(len(feld)):
+            ret.append([])
+            for k in range(len(feld[i])):
+                ret[i].append(feld[i][k])
+        return ret
+
+    def getValue(self, brett, farbe):
+        counter = 0
+        for i in range(len(brett)):
+            for k in range(len(brett[i])):
+                if brett[i][k] == None:
+                    continue
+                # print(brett[i][k].col)
+                if brett[i][k].farbe == farbe:
+                    counter += brett[i][k].wertung
+        return counter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import math
+
+
+class computer:
+    def evaluateField(self, farbe, brett):
+        evaluation = 0
+        positions = brett.getAllPositions()
+        movable_fields = []
+
+        # for piece,i,k in positions:
+        #     movable_fields.append(piece.getMoveableFields_filter(brett.feld))
+        #     if piece.farbe == farbe:
+        #         evaluation +=  piece.wertung
+        #     else:
+        #         evaluation-= piece.wertung
+
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields_filter(brett.feld))
+
+        for i in range(len(movable_fields)):
+            weight = 0
+            for j, k in movable_fields[i]:
+                weight += brett.feld[j][k].wertung
+            piece = brett.feld[positions[i][1]][positions[i][2]]
+
+            if piece.wertung == 20:
+                if piece.farbe == farbe:
+                    evaluation += piece.wertung * (10 - len(movable_fields[i]))
+                else:
+                    evaluation -= piece.wertung * (10 - len(movable_fields[i]))
+
+            if piece.farbe == farbe:
+                evaluation += weight * piece.wertung
+            else:
+                evaluation -= weight * piece.wertung
+
+        # for i in range(len(feld)):
+        #     for k in range(len(feld[i])):
+        #         piece = feld[i][k]
+        #         if piece == None:
+        #             continue
+        #         movable = piece.getMoveableFields(feld)
+        #         weight = 0
+        #         for j in movable:
+        #             temp = feld[j[0]][j[1]]
+        #             if temp == None:
+        #                 continue
+        #             weight += temp.wertung
+        #         if piece.farbe == farbe:
+        #             evaluation += weight * piece.wertung
+        #         else:
+        #             evaluation-=weight * piece.wertung
+        return evaluation
+
+    def maximize(self, brett, farbe, tiefe, alpha,beta):
+        if tiefe == 0:
+            return self.evaluateField(farbe, brett),None
+        v = -math.inf
+        move = None
+        movable_fields = []
+        positions = brett.getAllPositionsOfColor(farbe)
+        best_ones = []
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields(brett.feld))
+        for index in range(len(movable_fields)):
+            feld_backup = self.copy(brett.feld)
+            for p in range(len(movable_fields[index])):
+                row_from = positions[index][1]
+                col_from = positions[index][2]
+                row_to = movable_fields[index][p][0]
+                col_to = movable_fields[index][p][1]
+                brett.move(row_from, col_from, row_to, col_to)
+                temp = self.minimize(brett, farbe, tiefe - 1,alpha,beta)
+                if temp[0] > v:
+                    v = temp[0]
+                    move = ((positions[index][1], positions[index][2]),
+                        (movable_fields[index][p][0], movable_fields[index][p][1]))
+                if v > alpha:
+                    alpha = v
+                if v >= beta:
+                    return v,move
+                # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+                brett.setField(feld_backup)
+        # print(moves)
+        # print(moves)
+        return v,move
+
+    def minimize(self, brett, farbe, tiefe, alpha,beta):
+        if tiefe == 0:
+            return self.evaluateField(farbe, brett),None
+        v = math.inf
+        move = None
+        movable_fields = []
+        positions = brett.getAllPositionsOfColor('w' if farbe == 's' else 's')
+        for piece, i, k in positions:
+            movable_fields.append(piece.getMoveableFields(brett.feld))
+        for index in range(len(movable_fields)):
+            feld_backup = self.copy(brett.feld)
+            for p in range(len(movable_fields[index])):
+                brett.move(positions[index][1], positions[index][2], movable_fields[index][p][0],
+                           movable_fields[index][p][1])
+                temp = self.maximize(brett, farbe, tiefe - 1, alpha,beta)
+                if temp[0] < v:
+                    v = temp[0]
+                    move = ((positions[index][1], positions[index][2]),
+                            (movable_fields[index][p][0], movable_fields[index][p][1]))
+                if v < beta:
+                    beta = v
+                if v <= alpha:
+                    return v,move
+                # temp.append(((i,k),move,(self.evaluateField(farbe,brett.feld))))
+                brett.setField(feld_backup)
+        return v,move
+
+    def start(self, brett, farbe, tiefe):
+        return self.maximize(brett,farbe,tiefe,-math.inf,math.inf)
+
+    def copy(self, feld):
+        ret = []
+        for i in range(len(feld)):
+            ret.append([])
+            for k in range(len(feld[i])):
+                ret[i].append(feld[i][k])
+        return ret
+
+    def getValue(self, brett, farbe):
+        counter = 0
+        for i in range(len(brett)):
+            for k in range(len(brett[i])):
+                if brett[i][k] == None:
+                    continue
+                # print(brett[i][k].col)
+                if brett[i][k].farbe == farbe:
+                    counter += brett[i][k].wertung
+        return counter
+
+
+
